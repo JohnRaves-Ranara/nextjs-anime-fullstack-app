@@ -91,24 +91,13 @@ export function useSearchAnime(id: string) {
   });
 }
 
-export function useFetchAnimeInfoAnilist(id: string, enabled: boolean) {
+export function useFetchAnimeInfo(id: string) {
   return useQuery({
-    queryKey: ["infoAnilist", id],
+    queryKey: ["animeInfo", id],
     queryFn: async () => {
-      return fetchAnimeInfoAnilist(id);
-    },
-    enabled: enabled,
-    refetchInterval: false,
-    refetchIntervalInBackground: false,
-    ...neverRefetchSettings,
-  });
-}
-
-export function useFetchAnimeInfoAnify(id: string) {
-  return useQuery({
-    queryKey: ["infoAnify", id],
-    queryFn: async () => {
-      return fetchAnimeInfoAnify(id);
+      const animeInfoAnilist = await fetchAnimeInfoAnilist(id);
+      const animeInfoAnify = await fetchAnimeInfoAnify(id);
+      return { animeInfoAnilist, animeInfoAnify };
     },
     refetchInterval: false,
     refetchIntervalInBackground: false,
@@ -142,22 +131,30 @@ export function useFetchEpisodeStreamLinks(episodeId: string | null) {
 }
 
 export function useChunkEpisodes(
-  animeInfoAnify: AnimeInfoAnify | undefined,
-  animeInfoAnilist: AnimeInfoAnilist | undefined
+  animeInfo:
+    | {
+        animeInfoAnilist: AnimeInfoAnilist;
+        animeInfoAnify: AnimeInfoAnify;
+      }
+    | undefined
 ) {
   return useQuery({
     queryKey: [
       "chunkedEpisodes",
-      `anify ${animeInfoAnify?.id}`,
-      `anilist ${animeInfoAnilist?.id}`,
+      `anify ${animeInfo?.animeInfoAnify.id} anilist ${animeInfo?.animeInfoAnilist.id}`,
     ],
     queryFn: () => {
+      console.log("ANIMEINFOANILIST", animeInfo!.animeInfoAnilist);
+      console.log("USECHUNKEPISODES RAN");
       return chunkEpisodes(
-        getEpisodesToBeRendered(animeInfoAnify, animeInfoAnilist),
+        getEpisodesToBeRendered(
+          animeInfo?.animeInfoAnify,
+          animeInfo?.animeInfoAnilist
+        ),
         30
       );
     },
-    enabled: !!animeInfoAnify && !!animeInfoAnilist,
+    enabled: !!animeInfo,
     refetchInterval: false,
     refetchIntervalInBackground: false,
     ...neverRefetchSettings,

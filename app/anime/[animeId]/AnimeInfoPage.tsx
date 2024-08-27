@@ -1,8 +1,7 @@
 "use client";
 import {
   useChunkEpisodes,
-  useFetchAnimeInfoAnify,
-  useFetchAnimeInfoAnilist,
+  useFetchAnimeInfo
 } from "@/app/services/queries/animes";
 import AnimeHeroComponent from "./components/AnimeHeroComponent";
 import Episodes from "./components/Episodes";
@@ -15,42 +14,30 @@ type AnimeInfoProps = {
 
 export default function AnimeInfoPage({ animeId }: AnimeInfoProps) {
   const {
-    data: animeInfoAnify,
-    isLoading: isAnimeInfoAnifyLoading,
-    error: animeInfoAnifyError,
-  } = useFetchAnimeInfoAnify(animeId);
+    data: animeInfo,
+    isLoading: isAnimeInfoLoading,
+    error: isAnimeInfoError,
+  } = useFetchAnimeInfo(animeId);
 
-  const {
-    data: animeInfoAnilist,
-    isLoading: isAnimeInfoAnilistLoading,
-    error: animeInfoAnilistError,
-  } = useFetchAnimeInfoAnilist(animeId, true);
-
-  const { data: chunkedEpisodes } = useChunkEpisodes(
-    animeInfoAnify,
-    animeInfoAnilist
-  );
+  const { data: chunkedEpisodes } = useChunkEpisodes(animeInfo);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  if (isAnimeInfoAnifyLoading || isAnimeInfoAnilistLoading) {
+  if (isAnimeInfoLoading) {
     return (
       <div className="grid text-2xl text-white bg-darkBg h-dvh place-items-center">
         <p>
-          LOADING&nbsp;
-          {isAnimeInfoAnifyLoading ? (
-            <span className="font-semibold text-green-500">ANIFY</span>
-          ) : (
-            <span className="font-semibold text-blue-500">ANILIST</span>
-          )}
+          Loading&nbsp;
+          <span className="font-semibold text-green-500">ANIME</span>
+          in client
         </p>
       </div>
     );
   }
 
-  if (animeInfoAnifyError && animeInfoAnilistError) {
+  if (isAnimeInfoError) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-darkBg">
         <p>Oops! There was an error fetching the details for this anime.</p>
@@ -59,7 +46,8 @@ export default function AnimeInfoPage({ animeId }: AnimeInfoProps) {
     );
   }
 
-  if (animeInfoAnify && animeInfoAnilist) {
+  if (animeInfo) {
+    const { animeInfoAnify, animeInfoAnilist } = animeInfo;
     return (
       <main className="w-full pb-32">
         <AnimeHeroComponent
@@ -93,11 +81,14 @@ export default function AnimeInfoPage({ animeId }: AnimeInfoProps) {
           isInfoPage
           chunkedEpisodes={chunkedEpisodes}
           replace={false}
-          type={animeInfoAnilist.type ?? animeInfoAnify.format}
+          type={animeInfoAnilist.type}
           defaultEpisodeImage={
             animeInfoAnify.coverImage ?? animeInfoAnilist.cover
           }
         />
+        {/* idk why, but one piece (only one piece) animeInfoAnilist.recommendations is undefined when 
+        it reaches here, even if its not when you console.log it. So i need to render this only if
+        animeInfoAnilist.recommendations exists */}
         {animeInfoAnilist.recommendations && (
           <AnimeCategoryCarousel
             isInfoPage

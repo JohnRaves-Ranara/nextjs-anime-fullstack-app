@@ -1,5 +1,4 @@
 "use client";
-// Base styles for media player and provider (~400B).
 import "@vidstack/react/player/styles/default/theme.css";
 import "@vidstack/react/player/styles/default/layouts/video.css";
 import { useSearchParams, useParams, useRouter } from "next/navigation";
@@ -12,18 +11,20 @@ import { useEffect } from "react";
 import {
   useChunkEpisodes,
   useEpisodeInfo,
-  useFetchAnimeInfoAnify,
-  useFetchAnimeInfoAnilist,
+  useFetchAnimeInfo,
   useFetchEpisodeStreamLinks,
 } from "@/app/services/queries/animes";
 import Episodes from "../components/Episodes";
 import AnimeCategoryCarousel from "../../components/AnimeCategoryCarousel";
 
-export default function AnimeWatchPage() {
+type AnimeWatchPageProps = {
+  animeId: string;
+};
+
+export default function AnimeWatchPage({ animeId }: AnimeWatchPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const episodeId = searchParams.get("id");
-  const { animeId } = useParams();
 
   useEffect(() => {
     if (!episodeId || episodeId === "") {
@@ -38,49 +39,36 @@ export default function AnimeWatchPage() {
   } = useFetchEpisodeStreamLinks(episodeId);
 
   const {
-    data: animeInfoAnify,
-    isLoading: isAnimeInfoAnifyLoading,
-    error: animeInfoAnifyError,
-  } = useFetchAnimeInfoAnify(animeId as string);
+    data: animeInfo,
+    isLoading: isAnimeInfoLoading,
+    error: animeInfoError,
+  } = useFetchAnimeInfo(animeId as string);
 
-  const {
-    data: animeInfoAnilist,
-    isLoading: isAnimeInfoAnilistLoading,
-    error: animeInfoAnilistError,
-  } = useFetchAnimeInfoAnilist(animeId as string, true);
+  const { data: chunkedEpisodes, isLoading: isChunkEpisodesLoading } =
+    useChunkEpisodes(animeInfo);
 
-  const { data: chunkedEpisodes } = useChunkEpisodes(
-    animeInfoAnify,
-    animeInfoAnilist
+  const { data: episodeInfo, isLoading: isEpisodeInfoLoading } = useEpisodeInfo(
+    episodeId,
+    chunkedEpisodes
   );
-
-  const { data: episodeInfo } = useEpisodeInfo(episodeId, chunkedEpisodes);
 
   if (
     isEpisodeStreamLinksLoading ||
-    isAnimeInfoAnifyLoading ||
-    isAnimeInfoAnilistLoading
+    isAnimeInfoLoading ||
+    isChunkEpisodesLoading ||
+    isEpisodeInfoLoading
   ) {
     return (
-      <div className="grid text-2xl text-white h-dvh place-items-center">
+      <div className="grid text-2xl text-white bg-darkBg h-dvh place-items-center">
         <p>
-          LOADING&nbsp;
-          <span className="font-semibold text-red-500">
-            {isEpisodeStreamLinksLoading &&
-            isAnimeInfoAnifyLoading &&
-            isAnimeInfoAnilistLoading
-              ? "ALL"
-              : isEpisodeStreamLinksLoading
-              ? "EPISODE"
-              : isAnimeInfoAnifyLoading
-              ? "ANIFY"
-              : "ANILIST"}
-          </span>
+          Loading&nbsp;
+          <span className="font-semibold text-cyan-500">EPISODE</span>
+          in client
         </p>
       </div>
     );
   }
-  if (episodeStreamLinksError || animeInfoAnifyError || animeInfoAnilistError) {
+  if (episodeStreamLinksError || animeInfoError) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-darkBg">
         <p>Oops! There was an error fetching this episode.</p>
@@ -89,7 +77,8 @@ export default function AnimeWatchPage() {
     );
   }
 
-  if (episodeStreamLinks && animeInfoAnify && animeInfoAnilist) {
+  if (episodeStreamLinks && animeInfo && chunkedEpisodes && episodeInfo) {
+    const { animeInfoAnify, animeInfoAnilist } = animeInfo;
     return (
       <div className="flex flex-col pb-32">
         <div className="flex flex-col w-full gap-2 pt-20 lg:pt-24 lg:gap-6 lg:flex-row lg:px-16">
@@ -117,8 +106,13 @@ export default function AnimeWatchPage() {
             <div className="w-full px-2 mt-2 sm:px-3 lg:px-0">
               <div className="flex flex-col gap-1">
                 <p className="text-lg font-bold sm:text-xl line-clamp-1">
-                  {animeInfoAnilist.title.english ??
-                    animeInfoAnify.title.english}
+                  {/* idk why, but one piece (only one piece) animeInfoAnilist.title 
+                   is undefined when it reaches here, even if its not, when you console.log it. 
+                   So i need to render this only if animeInfoAnilist.title exists */}
+                  {animeInfoAnilist.title && animeInfoAnify.title
+                    ? animeInfoAnilist.title.english ??
+                      animeInfoAnify.title.english
+                    : ""}
                 </p>
                 <p className="text-lg font-semibold text-gray-400 sm:text-xl">
                   {episodeInfo ? `Episode ${episodeInfo.number}` : "Loading..."}
@@ -142,12 +136,17 @@ export default function AnimeWatchPage() {
             }
           />
         </div>
-        <AnimeCategoryCarousel
-          isInfoPage={false}
-          isHomePage={false}
-          categoryName="Recommendations"
-          recommendations={animeInfoAnilist.recommendations}
-        />
+        {/* idk why, but one piece (only one piece) animeInfoAnilist.recommendations is undefined when 
+        it reaches here, even if its not, when you console.log it. So i need to render this only if
+        animeInfoAnilist.recommendations exists */}
+        {animeInfoAnilist.recommendations && (
+          <AnimeCategoryCarousel
+            isInfoPage={false}
+            isHomePage={false}
+            categoryName="Recommendations"
+            recommendations={animeInfoAnilist.recommendations}
+          />
+        )}
       </div>
     );
   }

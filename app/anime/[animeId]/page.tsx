@@ -1,4 +1,5 @@
 import {
+  fetchAnimeInfo,
   fetchAnimeInfoAnify,
   fetchAnimeInfoAnilist,
 } from "@/app/services/functions/animes";
@@ -27,12 +28,8 @@ export default async function Home({
   });
 
   await queryClient.prefetchQuery({
-    queryKey: ["infoAnify", params.animeId],
-    queryFn: () => fetchAnimeInfoAnify(params.animeId),
-  });
-  await queryClient.prefetchQuery({
-    queryKey: ["infoAnilist", params.animeId],
-    queryFn: () => fetchAnimeInfoAnilist(params.animeId),
+    queryKey: ["animeInfo", params.animeId],
+    queryFn: () => fetchAnimeInfo(params.animeId),
   });
 
   return (

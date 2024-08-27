@@ -55,6 +55,12 @@ export async function fetchAnimeInfoAnify(id: string) {
   return animeInfoAnify as AnimeInfoAnify;
 }
 
+export async function fetchAnimeInfo(id: string) {
+  const animeInfoAnilist = await fetchAnimeInfoAnilist(id);
+  const animeInfoAnify = await fetchAnimeInfoAnify(id);
+  return { animeInfoAnilist, animeInfoAnify };
+}
+
 export async function fetchPopularAnimes(perPage: number) {
   const { data: popularAnimes } = await axios.get(
     `${BASE_URL_ANILIST}/advanced-search?sort=["POPULARITY_DESC"]&perPage=${perPage}`
