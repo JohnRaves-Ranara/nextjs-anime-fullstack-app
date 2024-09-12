@@ -1,3 +1,5 @@
+"use server"
+
 import axios from "axios";
 import {
   AnilistAnimeStatus,
@@ -75,6 +77,7 @@ export async function filterAnime(
     `${BASE_URL_ANILIST}/advanced-search?perPage=30${_query}${_season}${_genres}${_year}${_sortBy}${_format}${_page}${_status}`
   );
 
+  console.log('SEARCH FOR ANIME', query);
   return filteredAnimes as MultipleAnimeResponse;
 }
 
@@ -82,7 +85,7 @@ export async function fetchAnimeInfoAnilist(animeId: string) {
   const { data: animeInfoAnilist } = await axios.get(
     `${BASE_URL_ANILIST}/data/${animeId}`
   );
-  console.log('FETCHED ANIME INFO ANILIST');
+  console.log('FETCHED ANIME INFO ANILIST', animeId);
   return animeInfoAnilist as AnimeInfoAnilist;
 }
 
@@ -121,7 +124,7 @@ export async function fetchAnimeEpisodes(animeId: string) {
   const anilistEps = anilistEpsResponse?.data as Episode[];
   const anizipEps = anizipEpsResponse?.data as AnimeInfoAnizip;
 
-  console.log('FETCHED EPISODES');
+  console.log('FETCHED EPISODES', animeId);
 
   return { anifyEps, anilistEps, anizipEps };
 }
@@ -130,6 +133,6 @@ export async function fetchEpisodeStreamLinks(episodeId: string) {
   const { data: episodeStreamLinks } = await axios.get(
     `${BASE_URL_ANILIST}/watch/${episodeId}`
   );
-  console.log("FETCHED EPISODE LINKS");
+  console.log("FETCHED EPISODE LINKS", episodeId);
   return episodeStreamLinks as EpisodeStreamLinks;
 }
