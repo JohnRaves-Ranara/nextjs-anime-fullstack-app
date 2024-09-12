@@ -8,28 +8,22 @@ type AnimeHeroComponentProps = {
   cover: string;
   title: string;
   description: string;
-  id: string;
-  year?: number;
-  type?: string;
+  animeId: string;
   trendingRank?: number;
-  genres: string[];
 };
 
 export default function TrendingCarouselItem({
   image,
-  // cover,
   title,
   description,
-  id,
-  // type,
+  animeId,
   trendingRank,
-  // genres,
 }: AnimeHeroComponentProps) {
 
   const router = useRouter()
 
   return (
-    <div className="flex items-end justify-center lg:items-center size-full lg:pt-20 z-[8]">
+    <div className="flex items-end justify-center lg:items-center size-full lg:pt-20">
       <div className="relative flex justify-center w-full lg:w-[1440px] lg:px-16 px-3 sm:px-6">
         <div className="flex w-full gap-16">
           <div className="aspect-[3/4] h-[300px] rounded-xl overflow-hidden z-10 lg:block hidden">
@@ -56,7 +50,7 @@ export default function TrendingCarouselItem({
                   whileHover={{ scale: 1.03 }}
                   transition={{ duration: 0.2 }}
                   onClick={() => {
-                    router.push(`/anime/${id}`)
+                    router.push(`/anime/${animeId}`);
                   }}
                   className="flex items-center gap-1 px-3 py-2 rounded-full sm:gap-2 mobile-l:px-4 sm:px-5 bg-mainAccent"
                 >

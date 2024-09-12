@@ -72,6 +72,40 @@ body {
   background-color: #100c14;
 }
 
+/* Hide scrollbar for modern browsers */
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar for Chrome, Safari, and Edge */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@layer utilities {
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-track:hover {
+    border-radius: 0rem;
+    background: black;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #7d7d7d;
+    border-radius: 50vh;
+    height: 100px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #b4b4b4;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

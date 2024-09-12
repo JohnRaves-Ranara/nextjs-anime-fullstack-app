@@ -1,14 +1,12 @@
 import {
-  fetchAnimeInfo,
-  fetchAnimeInfoAnify,
   fetchAnimeInfoAnilist,
 } from "@/app/services/functions/animes";
 import {
   HydrationBoundary,
-  QueryClient,
   dehydrate,
 } from "@tanstack/react-query";
 import AnimeInfoPage from "./AnimeInfoPage";
+import { getQueryClient } from "@/app/getQueryClient";
 
 export default async function Home({
   params,
@@ -17,19 +15,11 @@ export default async function Home({
     animeId: string;
   };
 }) {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: Infinity,
-        gcTime: Infinity,
-        retry: false,
-      },
-    },
-  });
+  const queryClient = getQueryClient()
 
-  await queryClient.prefetchQuery({
-    queryKey: ["animeInfo", params.animeId],
-    queryFn: () => fetchAnimeInfo(params.animeId),
+  queryClient.prefetchQuery({
+    queryKey: ["animeInfoAnilist", params.animeId],
+    queryFn: () => fetchAnimeInfoAnilist(params.animeId)
   });
 
   return (

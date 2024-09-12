@@ -5,8 +5,8 @@ type EpisodeCardProps = {
   episodeId: string;
   number: number;
   title: string;
-  image?: string;
-  type?: string;
+  image: string | null | undefined;
+  type: string | null | undefined;
   replace: boolean;
 };
 
@@ -21,12 +21,8 @@ export default function EpisodeCard({
 }: EpisodeCardProps) {
   return (
     <Link
-      href={{
-        pathname: `/anime/${animeId}/watch`,
-        query: {
-          id: episodeId.replace(/^\//, ""),
-        },
-      }}
+      href={`/anime/${animeId}/watch?id=${episodeId.replace(/^\//, "")}`}
+      prefetch={true}
       replace={replace}
       className="relative flex flex-col gap-2 text-xs md:text-sm aspect-[4/3] group"
     >
@@ -49,7 +45,7 @@ export default function EpisodeCard({
         <div className="bg-gray-700 rounded-lg size-full">
           <img
             loading="eager"
-            src={image}
+            src={image ?? "/no-image.png"}
             className="absolute inset-0 object-cover rounded-lg size-full"
           />
         </div>

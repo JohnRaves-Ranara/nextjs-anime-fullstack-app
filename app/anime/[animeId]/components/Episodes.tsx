@@ -1,26 +1,69 @@
-import { EpisodeChunk } from "@/utils/types/animeAnilist";
 import { ChevronDown } from "lucide-react";
 import EpisodeCard from "./EpisodeCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Data } from "@/utils/types/animeAnify";
+import { Episode } from "@/utils/types/animeAnilist";
+import { AnimeInfoAnizip } from "@/utils/types/animeAnizip";
+import { useChunkEpisodes } from "@/app/services/queries/animes";
+import { UseQueryResult } from "@tanstack/react-query";
 
-type EpisodesProps = {
+type EpisodeProps = {
   animeId: string | undefined;
-  chunkedEpisodes: EpisodeChunk[] | null | undefined;
-  defaultEpisodeImage: string | undefined;
   type: string | undefined;
   replace: boolean;
   isInfoPage: boolean;
+  defaultEpisodeImage: string | undefined;
+  episodesQuery: UseQueryResult<
+    {
+      anifyEps: Data[];
+      anilistEps: Episode[];
+      anizipEps: AnimeInfoAnizip;
+    },
+    Error
+  >;
 };
 
 export default function Episodes({
   animeId,
-  chunkedEpisodes,
-  defaultEpisodeImage,
   type,
   replace,
   isInfoPage,
-}: EpisodesProps) {
-  if (chunkedEpisodes) {
+  defaultEpisodeImage,
+  episodesQuery,
+}: EpisodeProps) {
+  const {
+    data: episodes,
+    isLoading: isEpisodesLoading,
+    error: episodesError,
+  } = episodesQuery;
+
+  const { data: chunkedEpisodes, isLoading: isChunkEpisodesLoading } =
+    useChunkEpisodes(episodes);
+
+  if (isEpisodesLoading || isChunkEpisodesLoading) {
+    return (
+      <div className="flex flex-col px-3 pt-8 pb-16 space-y-6 text-[#f6f4f4] sm:px-5 md:px-8 lg:px-12 xl:px-16">
+        <p className="text-lg font-semibold lg:text-xl">Episodes</p>
+        <div className="self-center py-12 text-xl">Loading episodes...</div>
+      </div>
+    );
+  }
+
+  if (episodesError) {
+    return (
+      <div className="flex flex-col px-3 pt-8 pb-16 space-y-6 text-gray-400 sm:px-5 md:px-8 lg:px-12 xl:px-16">
+        <p className="font-semibold text-lg lg:text-xl text-[#f6f4f4]">
+          Episodes
+        </p>
+        <div className="self-center py-12 text-xl">
+          There was an error fetching episodes for this anime, please try again
+          later.
+        </div>
+      </div>
+    );
+  }
+
+  if (episodes && chunkedEpisodes) {
     if (isInfoPage) {
       return (
         <div className="flex flex-col w-full px-2 pt-8 space-y-6 text-sm text-gray-400 sm:px-5 md:px-8 lg:px-12 xl:px-16 lg:text-base">
@@ -28,14 +71,16 @@ export default function Episodes({
             <p className="text-lg lg:text-xl font-semibold text-[#f6f4f4]">
               Episodes
             </p>
-            <button className="flex items-center gap-3 px-3 py-2 pl-4 pr-3 transition-all duration-300 border border-gray-400 rounded-full group hover:border-mainAccent">
-              <p className="duration-300 group-hover:text-mainAccent">
-                {chunkedEpisodes
-                  ? `${chunkedEpisodes[0].startEp} - ${chunkedEpisodes[0].endEp}`
-                  : "0-0"}
-              </p>
-              <ChevronDown className="duration-300 size-6 group-hover:stroke-mainAccent" />
-            </button>
+            {chunkedEpisodes.length > 1 && (
+              <button className="flex items-center gap-3 px-3 py-2 pl-4 pr-3 transition-all duration-300 border border-gray-400 rounded-full group hover:border-mainAccent">
+                <p className="duration-300 group-hover:text-mainAccent">
+                  {chunkedEpisodes
+                    ? `${chunkedEpisodes[0].startEp} - ${chunkedEpisodes[0].endEp}`
+                    : "0-0"}
+                </p>
+                <ChevronDown className="duration-300 size-6 group-hover:stroke-mainAccent" />
+              </button>
+            )}
           </div>
           <div className="h-[360px] lg:h-auto overflow-y-auto">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-x-3 gap-y-4 lg:gap-x-4 lg:gap-y-6">
@@ -65,14 +110,22 @@ export default function Episodes({
           <p className="text-lg md:text-xl font-semibold text-[#f6f4f4]">
             Episodes
           </p>
-          <button className="flex items-center gap-3 px-3 py-2 transition-all duration-300 border border-gray-400 rounded-full group hover:border-mainAccent">
-            <p className="duration-300 group-hover:text-mainAccent lg:text-sm">
-              {`${chunkedEpisodes[0].startEp} - ${chunkedEpisodes[0].endEp}`}
-            </p>
-            <ChevronDown className="duration-300 size-6 lg:size-5 group-hover:stroke-mainAccent" />
-          </button>
+          {chunkedEpisodes.length > 1 && (
+            <button className="flex items-center gap-3 px-3 py-2 pl-4 pr-3 transition-all duration-300 border border-gray-400 rounded-full group hover:border-mainAccent">
+              <p className="duration-300 group-hover:text-mainAccent">
+                {chunkedEpisodes
+                  ? `${chunkedEpisodes[0].startEp} - ${chunkedEpisodes[0].endEp}`
+                  : "0-0"}
+              </p>
+              <ChevronDown className="duration-300 size-6 group-hover:stroke-mainAccent" />
+            </button>
+          )}
         </div>
-        <ScrollArea className={`h-[360px] lg:h-[650px] ${chunkedEpisodes[0].episodes.length < 30 ? "lg:h-auto" : ""} overflow-y-auto`}>
+        <ScrollArea
+          className={`h-[360px] lg:h-[650px] ${
+            chunkedEpisodes[0].episodes.length < 30 ? "lg:h-auto" : ""
+          } overflow-y-auto`}
+        >
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-x-3 gap-y-4">
             {chunkedEpisodes[0].episodes.map((episode, i) => {
               return (
@@ -93,7 +146,6 @@ export default function Episodes({
       </div>
     );
   }
-
   return (
     <div className="flex flex-col px-3 pt-8 pb-16 space-y-6 text-gray-400 sm:px-5 md:px-8 lg:px-12 xl:px-16">
       <p className="font-semibold text-lg lg:text-xl text-[#f6f4f4]">

@@ -25,14 +25,12 @@ import {
                 className="relative w-full h-[380px] mobile-l:h-[400px] sm:h-[420px] md:h-[450px] lg:h-[500px] xl:h-[525px]"
               >
                 <TrendingCarouselItem
-                  genres={anime.genres}
                   image={anime.image}
                   cover={anime.cover}
                   description={anime.description}
                   title={anime.title.english}
-                  id={anime.id}
+                  animeId={anime.id}
                   trendingRank={i + 1}
-                  type={anime.type}
                 />
                 <div className="absolute inset-0 w-full left-1/2 ml-[-50vw] h-full">
                   <div className="absolute bg-black/60 size-full backdrop-blur-[1px]"></div>

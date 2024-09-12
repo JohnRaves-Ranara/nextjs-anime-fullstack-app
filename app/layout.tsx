@@ -3,13 +3,14 @@ import { Montserrat } from "next/font/google";
 import "@/styles/globals.css";
 import Providers from "@/lib/Providers";
 import GlobalDialog from "@/components/global/GlobalDialog";
+import azurawatchogo from "@/public/azurawatch-logo.svg"
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "AzuraWatch",
   icons: {
-    icon: "/azurawatch-logo.svg"
+    icon: azurawatchogo.src
   }
 };
 

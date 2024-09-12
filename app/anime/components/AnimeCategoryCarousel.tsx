@@ -1,5 +1,5 @@
 import { ChevronRight } from "lucide-react";
-import { Anime, Recommendation } from "@/utils/types/animeAnilist";
+import { Anime, Recommendation, SortBy } from "@/utils/types/animeAnilist";
 import AnimeCard from "./AnimeCard";
 import {
   Carousel,
@@ -8,10 +8,12 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/custom-carousel";
+import Link from "next/link";
 
 type HomePageProps = {
   isHomePage: true;
   animeList: Anime[];
+  seeAllSortBy: SortBy;
 };
 
 type NotHomePageProps = {
@@ -34,16 +36,19 @@ export default function AnimeCategoryCarousel(
   if (props.isHomePage) {
     return (
       <div className="w-full px-3 pt-5 space-y-6 text-gray-400 lg:px-16 sm:px-6">
-        <div className="flex justify-between w-full">
+        <div className="flex items-center justify-between w-full">
           <p className="text-lg font-semibold sm:text-xl lg:text-2xl">
             {props.categoryName}
           </p>
-          <button className="flex items-center gap-1 px-2 py-1 transition-all duration-300 border border-gray-400 rounded-full sm:px-3 sm:py-2 lg:px-4 group hover:border-mainAccent">
+          <Link
+            href={`/anime/catalog?sortBy=${props.seeAllSortBy}`}
+            className="flex items-center gap-1 px-3 py-2 transition-all duration-300 border border-gray-400 rounded-full lg:px-4 group hover:border-mainAccent"
+          >
             <p className="text-xs transition-all duration-300 md:text-base group-hover:text-mainAccent whitespace-nowrap">
               See All
             </p>
             <ChevronRight className="transition-colors duration-300 size-4 md:size-5 lg:size-6 group-hover:stroke-mainAccent" />
-          </button>
+          </Link>
         </div>
 
         <Carousel
@@ -53,17 +58,17 @@ export default function AnimeCategoryCarousel(
           }}
           className="w-full"
         >
-          <CarouselContent className="">
+          <CarouselContent>
             {props.animeList.map((anime) => {
               return (
                 <CarouselItem
-                  key={anime.id}
+                  key={anime.id ?? anime.title ?? "no data"}
                   className="basis-1/3 mobile-m:basis-[30%] 570:basis-1/4 sm:basis-1/5 xl:basis-1/6"
                 >
                   <AnimeCard
                     isHomePage
-                    key={anime.id}
                     anime={anime}
+                    className="min-h-fit max-h-[250px]"
                   />
                 </CarouselItem>
               );
@@ -96,19 +101,21 @@ export default function AnimeCategoryCarousel(
           }}
           className="w-full"
         >
-          <CarouselContent className="">
-            {props.recommendations.map((recommendation) => {
+          <CarouselContent>
+            {props.recommendations.map((recommendation, i) => {
               return (
-                <CarouselItem
-                  key={recommendation.id}
-                  className="basis-1/3 mobile-m:basis-[30%] 570:basis-1/4 sm:basis-1/5 xl:basis-1/6"
-                >
-                  <AnimeCard
-                    isHomePage={false}
-                    key={recommendation.id}
-                    recommendation={recommendation}
-                  />
-                </CarouselItem>
+                recommendation.id && (
+                  <CarouselItem
+                    key={recommendation.id ?? recommendation.title ?? i}
+                    className="basis-1/3 mobile-m:basis-[30%] 570:basis-1/4 sm:basis-1/5 xl:basis-1/6"
+                  >
+                    <AnimeCard
+                      isHomePage={false}
+                      recommendation={recommendation}
+                      className="min-h-fit max-h-[250px]"
+                    />
+                  </CarouselItem>
+                )
               );
             })}
           </CarouselContent>

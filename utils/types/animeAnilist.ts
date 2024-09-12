@@ -20,10 +20,10 @@ export type Anime = {
   rating: number;
   releaseDate: number;
   color: string | null;
-  genres: string[];
+  genres: Genre[];
   totalEpisodes: number;
   duration: number;
-  type: string;
+  type: Format;
 };
 
 export type AnimeInfoAnilist = Anime & {
@@ -45,6 +45,34 @@ export type AnimeInfoAnilist = Anime & {
   artwork: Artwork[];
   episodes: Episode[];
 };
+
+export enum Season {
+  WINTER = "WINTER",
+  SPRING = "SPRING",
+  SUMMER = "SUMMER",
+  FALL = "FALL",
+}
+
+export enum Genre {
+  Action = "Action",
+  Adventure = "Adventure",
+  Cars = "Cars",
+  Comedy = "Comedy",
+  Drama = "Drama",
+  Fantasy = "Fantasy",
+  Horror = "Horror",
+  MahouShoujo = "Mahou Shoujo",
+  Mecha = "Mecha",
+  Music = "Music",
+  Mystery = "Mystery",
+  Psychological = "Psychological",
+  Romance = "Romance",
+  SciFi = "Sci-Fi",
+  SliceOfLife = "Slice of Life",
+  Sports = "Sports",
+  Supernatural = "Supernatural",
+  Thriller = "Thriller",
+}
 
 export type Title = {
   romaji: string;
@@ -172,11 +200,43 @@ export type Recommendation = {
   type: string;
 };
 
+export enum AnilistAnimeStatus {
+  RELEASING = "RELEASING",
+  FINISHED = "FINISHED",
+  CANCELLED = "CANCELLED",
+  NOT_YET_RELEASED = "NOT_YET_RELEASED",
+}
+
+export enum SortBy {
+  TRENDING_DESC = "TRENDING_DESC",
+  POPULARITY_DESC = "POPULARITY_DESC",
+  FAVOURITES_DESC = "FAVOURITES_DESC",
+  SCORE_DESC = "SCORE_DESC",
+  TITLE = "TITLE_ROMAJI",
+  TITLE_DESC = "TITLE_ROMAJI_DESC",
+  START_DATE_DESC = "START_DATE_DESC",
+}
+
+export enum Format {
+  TV = "TV",
+  TV_SHORT = "TV_SHORT",
+  OVA = "OVA",
+  ONA = "ONA",
+  MOVIE = "MOVIE",
+  SPECIAL = "SPECIAL",
+  MUSIC = "MUSIC",
+}
+
 export enum Status {
-  Completed = "Completed",
+  RELEASING = "RELEASING",
   Ongoing = "Ongoing",
+  FINISHED = "FINISHED",
+  Completed = "Completed",
   NotYetAired = "Not yet aired",
-  NOTYETRELEASED = "NOT_YET_RELEASED",
+  NOT_YET_RELEASED = "NOT_YET_RELEASED",
+  CANCELLED = "CANCELLED",
+  HIATUS = "HIATUS",
+  Cancelled = "Cancelled"
 }
 
 export type Relation = {

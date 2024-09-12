@@ -1,43 +1,36 @@
 "use client";
 import {
-  useChunkEpisodes,
-  useFetchAnimeInfo
+  useFetchAnimeEpisodes,
+  useFetchAnimeInfoAnilist,
 } from "@/app/services/queries/animes";
 import AnimeHeroComponent from "./components/AnimeHeroComponent";
 import Episodes from "./components/Episodes";
 import { useEffect } from "react";
 import AnimeCategoryCarousel from "@/app/anime/components/AnimeCategoryCarousel";
+import AnimeInfoLoading from "./loading";
 
 type AnimeInfoProps = {
   animeId: string;
 };
 
 export default function AnimeInfoPage({ animeId }: AnimeInfoProps) {
-  const {
-    data: animeInfo,
-    isLoading: isAnimeInfoLoading,
-    error: isAnimeInfoError,
-  } = useFetchAnimeInfo(animeId);
+  const episodesQuery = useFetchAnimeEpisodes(animeId);
 
-  const { data: chunkedEpisodes } = useChunkEpisodes(animeInfo);
+  const {
+    data: animeInfoAnilist,
+    isLoading: isAnimeInfoAnilistLoading,
+    error: animeInfoAnilistError,
+  } = useFetchAnimeInfoAnilist(animeId);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  if (isAnimeInfoLoading) {
-    return (
-      <div className="grid text-2xl text-white bg-darkBg h-dvh place-items-center">
-        <p>
-          Loading&nbsp;
-          <span className="font-semibold text-green-500">ANIME</span>
-          in client
-        </p>
-      </div>
-    );
+  if (isAnimeInfoAnilistLoading) {
+    return <AnimeInfoLoading />;
   }
 
-  if (isAnimeInfoError) {
+  if (animeInfoAnilistError) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-darkBg">
         <p>Oops! There was an error fetching the details for this anime.</p>
@@ -46,57 +39,49 @@ export default function AnimeInfoPage({ animeId }: AnimeInfoProps) {
     );
   }
 
-  if (animeInfo) {
-    const { animeInfoAnify, animeInfoAnilist } = animeInfo;
+  if (animeInfoAnilist) {
     return (
       <main className="w-full pb-32">
         <AnimeHeroComponent
+          episodesQuery={episodesQuery}
+          animeId={animeId}
           title={
-            animeInfoAnify.title.english ??
-            animeInfoAnify.title.romaji ??
-            animeInfoAnilist.title.english ??
-            animeInfoAnilist.title.romaji
+            animeInfoAnilist?.title.english ?? animeInfoAnilist?.title.romaji
           }
-          cover={animeInfoAnify.bannerImage ?? animeInfoAnilist.cover}
-          image={animeInfoAnilist.image ?? animeInfoAnify.coverImage}
-          id={animeInfoAnilist.id ?? animeInfoAnify.id}
-          description={
-            animeInfoAnilist.description ?? animeInfoAnify.description
-          }
-          genres={animeInfoAnilist.genres}
-          status={animeInfoAnify.status ?? animeInfoAnilist.status}
-          totalEpisodes={
-            animeInfoAnify.totalEpisodes ?? animeInfoAnilist.totalEpisodes
-          }
-          type={animeInfoAnilist.type ?? animeInfoAnify.format}
-          year={animeInfoAnilist.releaseDate ?? animeInfoAnify.year}
+          cover={animeInfoAnilist?.cover}
+          image={animeInfoAnilist?.image}
+          description={animeInfoAnilist?.description}
+          genres={animeInfoAnilist?.genres}
+          status={animeInfoAnilist?.status}
+          totalEpisodes={animeInfoAnilist?.totalEpisodes}
+          type={animeInfoAnilist?.type}
+          year={animeInfoAnilist?.releaseDate}
           rating={
-            animeInfoAnify.rating.anilist ??
-            animeInfoAnilist.rating! * 0.1 ??
+            animeInfoAnilist?.rating! * 0.1 ??
+            // anifyEpisodesQuery?.data?.rating.anilist
+            // ??
             null
           }
         />
         <Episodes
-          animeId={animeInfoAnify.id ?? animeInfoAnilist.id}
-          isInfoPage
-          chunkedEpisodes={chunkedEpisodes}
-          replace={false}
-          type={animeInfoAnilist.type}
           defaultEpisodeImage={
-            animeInfoAnify.coverImage ?? animeInfoAnilist.cover
+            animeInfoAnilist?.image ?? animeInfoAnilist?.cover
           }
+          episodesQuery={episodesQuery}
+          isInfoPage
+          animeId={animeId}
+          replace={false}
+          type={animeInfoAnilist?.type}
         />
-        {/* idk why, but one piece (only one piece) animeInfoAnilist.recommendations is undefined when 
-        it reaches here, even if its not when you console.log it. So i need to render this only if
-        animeInfoAnilist.recommendations exists */}
-        {animeInfoAnilist.recommendations && (
-          <AnimeCategoryCarousel
-            isInfoPage
-            isHomePage={false}
-            recommendations={animeInfoAnilist.recommendations}
-            categoryName="Recommendations"
-          />
-        )}
+        {animeInfoAnilist?.recommendations &&
+          animeInfoAnilist?.recommendations.length !== 0 && (
+            <AnimeCategoryCarousel
+              isInfoPage
+              isHomePage={false}
+              recommendations={animeInfoAnilist?.recommendations}
+              categoryName="Recommendations"
+            />
+          )}
       </main>
     );
   }

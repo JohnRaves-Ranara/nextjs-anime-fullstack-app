@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useGlobalStore } from "@/utils/stores/globalStore";
 import { Menu, Search } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -29,17 +29,15 @@ export default function HomeHeader() {
     <div
       className={`fixed left-1/2 ml-[-50vw] w-dvw z-[45] ${
         isScrolledDown ? "bg-darkBg/80" : ""
-      } transition-all duration-300 hidden lg:block z-[99999999]`}
+      } transition-all duration-300 hidden lg:block`}
     >
       <div
         className={`flex items-center justify-between mx-auto px-16 max-w-[1440px] py-4 transition-all duration-300`}
       >
         <Menu size={24} color="white" />
-        <div className="flex items-center gap-12 text-sm">
-          <Link href={"/anime"} className="font-medium">
-            Anime
-          </Link>
-          <button className="text-gray-300">Filter</button>
+        <div className="flex items-center gap-12 text-sm text-gray-30">
+          <Link href="/anime">Anime</Link>
+          <Link href="/anime/catalog">Catalog</Link>
           <img src="/azurawatch-logo.svg" className="size-12" />
           <button className="text-gray-300">Social</button>
           <button className="text-gray-300">Profile</button>

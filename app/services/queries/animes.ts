@@ -1,26 +1,33 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import {
-  AnimeInfoAnilist,
+  AnilistAnimeStatus,
   EpisodeChunk,
   EpisodeToBeRendered,
+  Format,
+  Season,
+  SortBy,
+  Episode,
 } from "@/utils/types/animeAnilist";
-import { AnimeInfoAnify } from "@/utils/types/animeAnify";
+import { Data } from "@/utils/types/animeAnify";
 import {
   chunkEpisodes,
   getEpisodesToBeRendered,
 } from "@/utils/functions/reusableFunctions";
 import {
   fetchAllTimeFavoriteAnimes,
+  fetchAnimeEpisodes,
   fetchAnimeInfoAnify,
   fetchAnimeInfoAnilist,
   fetchEpisodeStreamLinks,
   fetchPopularAnimes,
   fetchTopRatedAnimes,
   fetchTrendingAnimes,
+  filterAnime,
   searchAnime,
 } from "../functions/animes";
+import { AnimeInfoAnizip } from "@/utils/types/animeAnizip";
 
-const BASE_URL_ANILIST = "https://consumet-api-green.vercel.app/meta/anilist";
+const BASE_URL_ANILIST = "https://consumet-api-raves.vercel.app/meta/anilist";
 const BASE_URL_ANIFY = "https://anify.eltik.cc/info";
 
 // const frequentlyChanging = {
@@ -33,131 +40,136 @@ const BASE_URL_ANIFY = "https://anify.eltik.cc/info";
 //   staleTime: 240 * (60 * 1000), //4 hrs
 // };
 
-//this is the settings during development. to minimize network requests
-const neverRefetchSettings = {
-  gcTime: Infinity,
-  staleTime: Infinity,
-  retry: false,
-  refetchOnMount: false,
-  refetchOnWindowFocus: false,
-  refetchOnReconnect: false,
-};
-
 export function useFetchTrendingAnimes(perPage: number, pageNum: number) {
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: ["trending", perPage, pageNum],
     queryFn: async () => {
       return fetchTrendingAnimes(perPage, pageNum);
     },
-    refetchInterval: false,
-    refetchIntervalInBackground: false,
-    ...neverRefetchSettings,
   });
 }
 
 export function useFetchTopRatedAnimes(perPage: number) {
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: ["topRated", perPage],
     queryFn: async () => {
-      return fetchTopRatedAnimes(perPage);
+      return await fetchTopRatedAnimes(perPage);
     },
-    refetchInterval: false,
-    refetchIntervalInBackground: false,
-    ...neverRefetchSettings,
   });
 }
 
 export function useFetchAllTimeFavoriteAnimes(perPage: number) {
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: ["allTimeFavorite", perPage],
     queryFn: async () => {
-      return fetchAllTimeFavoriteAnimes(perPage);
+      return await fetchAllTimeFavoriteAnimes(perPage);
     },
-    refetchInterval: false,
-    refetchIntervalInBackground: false,
-    ...neverRefetchSettings,
   });
 }
 
-export function useSearchAnime(id: string) {
+export function useSearchAnime(query: string, enabled: boolean) {
   return useQuery({
-    queryKey: ["search", id],
+    queryKey: ["search", query],
     queryFn: async () => {
-      return searchAnime(id);
+      return await searchAnime(query);
     },
-    refetchInterval: false,
-    refetchIntervalInBackground: false,
-    ...neverRefetchSettings,
+    enabled: enabled,
   });
 }
 
-export function useFetchAnimeInfo(id: string) {
+export function useFilterAnime(
+  query?: string,
+  season?: Season,
+  genres?: string,
+  year?: number,
+  sortBy?: SortBy,
+  format?: Format,
+  page?: number,
+  status?: AnilistAnimeStatus
+) {
   return useQuery({
-    queryKey: ["animeInfo", id],
+    queryKey: [
+      "filterAnime",
+      query,
+      season,
+      genres,
+      year,
+      sortBy ?? SortBy.TRENDING_DESC,
+      format,
+      page ?? 1,
+      status,
+    ],
     queryFn: async () => {
-      const animeInfoAnilist = await fetchAnimeInfoAnilist(id);
-      const animeInfoAnify = await fetchAnimeInfoAnify(id);
-      return { animeInfoAnilist, animeInfoAnify };
+      return await filterAnime(
+        query,
+        season,
+        genres,
+        year,
+        sortBy,
+        format,
+        page,
+        status
+      );
     },
-    refetchInterval: false,
-    refetchIntervalInBackground: false,
-    ...neverRefetchSettings,
+  });
+}
+
+export function useFetchAnimeInfoAnilist(animeId: string) {
+  return useQuery({
+    queryKey: ["animeInfoAnilist", animeId],
+    queryFn: async () => {
+      return await fetchAnimeInfoAnilist(animeId);
+    },
+  });
+}
+
+export function useFetchAnimeEpisodes(animeId: string) {
+  return useQuery({
+    queryKey: ["episodes", animeId],
+    queryFn: async () => {
+      return await fetchAnimeEpisodes(animeId);
+    },
   });
 }
 
 export function useFetchPopularAnimes(perPage: number) {
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: ["popular", perPage],
     queryFn: async () => {
-      return fetchPopularAnimes(perPage);
+      return await fetchPopularAnimes(perPage);
     },
-    refetchInterval: false,
-    refetchIntervalInBackground: false,
-    ...neverRefetchSettings,
   });
 }
 
 export function useFetchEpisodeStreamLinks(episodeId: string | null) {
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: ["watchEpisode", episodeId],
     queryFn: async () => {
-      return fetchEpisodeStreamLinks(episodeId!);
+      return await fetchEpisodeStreamLinks(episodeId!);
     },
-    enabled: !!episodeId,
-    refetchInterval: false,
-    refetchIntervalInBackground: false,
-    ...neverRefetchSettings,
   });
 }
 
 export function useChunkEpisodes(
-  animeInfo:
+  animeEpisodes:
     | {
-        animeInfoAnilist: AnimeInfoAnilist;
-        animeInfoAnify: AnimeInfoAnify;
+        anifyEps: Data[] | null;
+        anilistEps: Episode[] | null;
+        anizipEps: AnimeInfoAnizip | null;
       }
     | undefined
 ) {
+  const anifyEpisodes = animeEpisodes?.anifyEps;
+  const anilistEpisodes = animeEpisodes?.anilistEps;
+  const anizipEpisodes = animeEpisodes?.anizipEps;
   return useQuery({
-    queryKey: [
-      "chunkedEpisodes",
-      `anify ${animeInfo?.animeInfoAnify.id} anilist ${animeInfo?.animeInfoAnilist.id}`,
-    ],
+    queryKey: ["chunkedEpisodes", animeEpisodes],
     queryFn: () => {
-      console.log("ANIMEINFOANILIST", animeInfo!.animeInfoAnilist);
-      console.log("USECHUNKEPISODES RAN");
       return chunkEpisodes(
-        getEpisodesToBeRendered(
-          animeInfo?.animeInfoAnify,
-          animeInfo?.animeInfoAnilist
-        ),
+        getEpisodesToBeRendered(anifyEpisodes, anilistEpisodes, anizipEpisodes),
         30
       );
     },
-    enabled: !!animeInfo,
-    refetchInterval: false,
-    refetchIntervalInBackground: false,
-    ...neverRefetchSettings,
   });
 }
 
@@ -178,8 +190,5 @@ export function useEpisodeInfo(
       return foundEpisode as EpisodeToBeRendered;
     },
     enabled: !!chunkedEpisodes && !!episodeId,
-    refetchInterval: false,
-    refetchIntervalInBackground: false,
-    ...neverRefetchSettings,
   });
 }

@@ -2,13 +2,21 @@ import { Bookmark, ChevronDown, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { Episode, Status } from "@/utils/types/animeAnilist";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { getRatingScore } from "@/utils/functions/reusableFunctions";
+import { Data } from "@/utils/types/animeAnify";
+import { AnimeInfoAnizip } from "@/utils/types/animeAnizip";
+import { UseQueryResult } from "@tanstack/react-query";
+import { useChunkEpisodes } from "@/app/services/queries/animes";
 
 type AnimeHeroComponentProps = {
   image?: string;
   cover?: string;
   title?: string;
   description?: string;
-  id?: string;
+  animeId: string;
   totalEpisodes?: number;
   year?: number;
   type?: string;
@@ -16,13 +24,15 @@ type AnimeHeroComponentProps = {
   trendingRank?: number;
   genres?: string[];
   rating?: number | null;
+  episodesQuery: UseQueryResult<
+    {
+      anifyEps: Data[];
+      anilistEps: Episode[];
+      anizipEps: AnimeInfoAnizip;
+    },
+    Error
+  >;
 };
-
-function getRatingScore(rating: number) {
-  const decimal = (rating * 10).toString().split(".")[1];
-  if (!decimal || decimal.length < 1) return (0.05 * (rating * 10)).toFixed(1);
-  return (0.05 * (rating * 10)).toFixed(2);
-}
 
 export default function AnimeHeroComponent({
   image,
@@ -35,33 +45,31 @@ export default function AnimeHeroComponent({
   status,
   genres,
   rating,
-}: // id,
-AnimeHeroComponentProps) {
+  animeId,
+  episodesQuery,
+}: AnimeHeroComponentProps) {
   const [starsFillWidthPercentage, setStarsFillWidthPercentage] = useState(0);
   const starsFillWidthRef = useRef<HTMLDivElement | null>(null);
   const [readMore, setReadMore] = useState(false);
   const [descriptionHeight, setDescriptionHeight] = useState(0);
   const descriptionRef = useRef<HTMLParagraphElement | null>(null);
-
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
+
+  const { data: chunkedEpisodes, isLoading: isChunkEpisodesLoading } =
+    useChunkEpisodes(episodesQuery.data);
 
   useEffect(() => {
+    setIsMounted(true);
     if (starsFillWidthRef.current && rating) {
       setStarsFillWidthPercentage(rating * 10);
-    } else {
-      return;
     }
-  }, []);
-
-  useEffect(() => {
     if (descriptionRef.current) {
       setDescriptionHeight(
         descriptionRef.current.getBoundingClientRect().height
       );
-    } else {
-      return;
     }
-  }, []);
+  }, [rating]);
 
   return (
     <div className="relative flex justify-center w-full text-sm md:text-base">
@@ -115,21 +123,30 @@ AnimeHeroComponentProps) {
               </div>
               <div className="flex gap-2">
                 <p className="text-gray-400">Status:</p>
-                <p
-                  className={`${
-                    status === "RELEASING" || status === "Ongoing"
-                      ? "text-green-500"
-                      : status === "FINISHED" || status === "Completed"
-                      ? "text-blue-500"
-                      : "text-orange-500"
-                  } font-semibold`}
-                >
-                  {status}
-                </p>
+                {status && (
+                  <p
+                    className={cn("font-semibold text-orange-500", {
+                      "text-green-500": [
+                        Status.Ongoing,
+                        Status.RELEASING,
+                      ].includes(status as Status),
+                      "text-blue-500": [
+                        Status.FINISHED,
+                        Status.Completed,
+                      ].includes(status as Status),
+                      "text-red-500": [
+                        Status.CANCELLED,
+                        Status.Cancelled,
+                      ].includes(status as Status),
+                    })}
+                  >
+                    {status}
+                  </p>
+                )}
               </div>
               <div className="flex gap-2">
                 <p className="text-gray-400">Type:</p>
-                <p>{type && type !== "" ? type : "?"}</p>
+                <p>{type ? type : "?"}</p>
               </div>
             </div>
             <div className="flex w-full gap-2">
@@ -137,9 +154,13 @@ AnimeHeroComponentProps) {
               <div className="flex flex-wrap gap-1 max-w-[70%]">
                 {genres &&
                   genres.map((genre, i) => (
-                    <button key={i} className="hover:text-mainAccent">
+                    <Link
+                      href={`/anime/catalog?genres=${genre}`}
+                      key={i}
+                      className="hover:text-mainAccent"
+                    >
                       {i === genres.length - 1 ? `${genre}` : `${genre},`}
-                    </button>
+                    </Link>
                   ))}
               </div>
             </div>
@@ -147,30 +168,72 @@ AnimeHeroComponentProps) {
           <div className="flex items-center gap-2 lg:hidden">
             <p>{year}</p>
             <div className="bg-gray-400 rounded-full size-1"></div>
-            <p
-              className={`${
-                status === "RELEASING" || status === "Ongoing"
-                  ? "text-green-500"
-                  : status === "FINISHED" || status === "Completed"
-                  ? "text-blue-500"
-                  : "text-orange-500"
-              }`}
-            >
-              {status}
-            </p>
+            {status && (
+              <p
+                className={cn("font-semibold text-orange-500", {
+                  "text-green-500": [Status.Ongoing, Status.RELEASING].includes(
+                    status as Status
+                  ),
+                  "text-blue-500": [Status.FINISHED, Status.Completed].includes(
+                    status as Status
+                  ),
+                  "text-red-500": [Status.CANCELLED, Status.Cancelled].includes(
+                    status as Status
+                  ),
+                })}
+              >
+                {status}
+              </p>
+            )}
           </div>
           <div className="flex gap-5 my-3">
-            <motion.button
-              onClick={() => {
-                router.push(`/anime/1535`);
-              }}
-              whileHover={{ scale: 1.03 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-center gap-2 px-4 py-4 rounded-full mobile-m:px-4 mobile-m:py-3 lg:px-5 lg:py-2 bg-mainAccent"
-            >
-              <Play size={20} />
-              <p className="hidden font-medium mobile-m:block">Play Now</p>
-            </motion.button>
+            {!isMounted ? (
+              <motion.button
+                disabled={
+                  episodesQuery.isLoading ||
+                  episodesQuery.isError ||
+                  isChunkEpisodesLoading
+                }
+                onClick={() => {
+                  chunkedEpisodes &&
+                    router.replace(
+                      `/anime/${animeId}/watch?id=${chunkedEpisodes[0].episodes[0].id.replace(
+                        /^\//,
+                        ""
+                      )}`
+                    );
+                }}
+                whileHover={{ scale: 1.03 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center gap-2 disabled:bg-fuchsia-800 disabled:text-gray-400 px-4 py-4 rounded-full mobile-m:px-4 mobile-m:py-3 lg:px-5 lg:py-2 bg-mainAccent"
+              >
+                <Play size={20} />
+                <p className="hidden font-medium mobile-m:block">Play Now</p>
+              </motion.button>
+            ) : (
+              <motion.button
+                disabled={
+                  episodesQuery.isLoading ||
+                  episodesQuery.isError ||
+                  isChunkEpisodesLoading
+                }
+                onClick={() => {
+                  chunkedEpisodes &&
+                    router.replace(
+                      `/anime/${animeId}/watch?id=${chunkedEpisodes[0].episodes[0].id.replace(
+                        /^\//,
+                        ""
+                      )}`
+                    );
+                }}
+                whileHover={{ scale: 1.03 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center gap-2 disabled:bg-fuchsia-800 disabled:text-gray-400 px-4 py-4 rounded-full mobile-m:px-4 mobile-m:py-3 lg:px-5 lg:py-2 bg-mainAccent"
+              >
+                <Play size={20} />
+                <p className="hidden font-medium mobile-m:block">Play Now</p>
+              </motion.button>
+            )}
             <motion.button
               whileHover={{ scale: 1.03 }}
               transition={{ duration: 0.2 }}
@@ -255,21 +318,30 @@ AnimeHeroComponentProps) {
               </div>
               <div className="flex gap-2">
                 <p className="text-gray-400">Status:</p>
-                <p
-                  className={`${
-                    status === "RELEASING" || status === "Ongoing"
-                      ? "text-green-500"
-                      : status === "FINISHED" || status === "Completed"
-                      ? "text-blue-500"
-                      : "text-orange-500"
-                  } font-semibold `}
-                >
-                  {status}
-                </p>
+                {status && (
+                  <p
+                    className={cn("font-semibold text-orange-500", {
+                      "text-green-500": [
+                        Status.Ongoing,
+                        Status.RELEASING,
+                      ].includes(status as Status),
+                      "text-blue-500": [
+                        Status.FINISHED,
+                        Status.Completed,
+                      ].includes(status as Status),
+                      "text-red-500": [
+                        Status.CANCELLED,
+                        Status.Cancelled,
+                      ].includes(status as Status),
+                    })}
+                  >
+                    {status}
+                  </p>
+                )}
               </div>
               <div className="flex gap-2">
                 <p className="text-gray-400">Type:</p>
-                <p className="">{type && type !== "" ? type : "?"}</p>
+                <p className="">{type ? type : "?"}</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -277,9 +349,13 @@ AnimeHeroComponentProps) {
               <div className="flex flex-wrap gap-1">
                 {genres &&
                   genres.map((genre, i) => (
-                    <button key={i} className="hover:text-mainAccent">
+                    <Link
+                      href={`/anime/catalog?genres=${genre}`}
+                      key={i}
+                      className="hover:text-mainAccent"
+                    >
                       {i === genres.length - 1 ? `${genre}` : `${genre},`}
-                    </button>
+                    </Link>
                   ))}
               </div>
             </div>

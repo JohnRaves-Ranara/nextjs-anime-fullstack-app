@@ -1,15 +1,11 @@
 import {
-  fetchAnimeInfo,
-  fetchAnimeInfoAnify,
+  fetchAnimeEpisodes,
   fetchAnimeInfoAnilist,
   fetchEpisodeStreamLinks,
 } from "@/app/services/functions/animes";
-import {
-  HydrationBoundary,
-  QueryClient,
-  dehydrate,
-} from "@tanstack/react-query";
+import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import AnimeWatchPage from "./AnimeWatchPage";
+import { getQueryClient } from "@/app/getQueryClient";
 
 export default async function Home({
   searchParams,
@@ -22,28 +18,26 @@ export default async function Home({
     animeId: string;
   };
 }) {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: Infinity,
-        gcTime: Infinity,
-        retry: false,
-      },
-    },
-  });
+  const queryClient = getQueryClient();
 
-  await queryClient.prefetchQuery({
+  queryClient.prefetchQuery({
     queryKey: ["watchEpisode", searchParams.id],
     queryFn: () => fetchEpisodeStreamLinks(searchParams.id),
   });
-  await queryClient.prefetchQuery({
-    queryKey: ["animeInfo", params.animeId],
-    queryFn: () => fetchAnimeInfo(params.animeId)
-  })
+
+  queryClient.prefetchQuery({
+    queryKey: ["animeInfoAnilist", params.animeId],
+    queryFn: () => fetchAnimeInfoAnilist(params.animeId),
+  });
+
+  queryClient.prefetchQuery({
+    queryKey: ["episodes", params.animeId],
+    queryFn: () => fetchAnimeEpisodes(params.animeId),
+  });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <AnimeWatchPage animeId={params.animeId}/>
+      <AnimeWatchPage animeId={params.animeId} episodeId={searchParams.id} />
     </HydrationBoundary>
   );
 }
