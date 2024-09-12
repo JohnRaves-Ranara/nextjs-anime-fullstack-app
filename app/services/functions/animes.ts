@@ -1,4 +1,4 @@
-"use server"
+"use server";
 
 import axios from "axios";
 import {
@@ -14,12 +14,9 @@ import {
 import { AnimeInfoAnify, Data } from "@/utils/types/animeAnify";
 import { AnimeInfoAnizip } from "@/utils/types/animeAnizip";
 
-const BASE_URL_ANILIST = "https://consumet-api-raves.vercel.app/meta/anilist";
-const BASE_URL_ANIFY = "https://anify.eltik.cc/info";
-
 export async function fetchTrendingAnimes(perPage: number, pageNum: number) {
   const { data: trendingAnimes } = await axios.get(
-    `${BASE_URL_ANILIST}/advanced-search?sort=["TRENDING_DESC"]&perPage=${perPage}&page=${pageNum}`
+    `${process.env.ANILIST_URL}/advanced-search?sort=["TRENDING_DESC"]&perPage=${perPage}&page=${pageNum}`
   );
   console.log("FETCHED TRENDING");
   return trendingAnimes as MultipleAnimeResponse;
@@ -27,7 +24,7 @@ export async function fetchTrendingAnimes(perPage: number, pageNum: number) {
 
 export async function fetchTopRatedAnimes(perPage: number) {
   const { data: cachedTopRated } = await axios.get(
-    `${BASE_URL_ANILIST}/advanced-search?sort=["SCORE_DESC"]&perPage=${perPage}&page=1`
+    `${process.env.ANILIST_URL}/advanced-search?sort=["SCORE_DESC"]&perPage=${perPage}&page=1`
   );
   console.log("FETCHED TOP RATED");
   return cachedTopRated as MultipleAnimeResponse;
@@ -35,7 +32,7 @@ export async function fetchTopRatedAnimes(perPage: number) {
 
 export async function fetchAllTimeFavoriteAnimes(perPage: number) {
   const { data: cachedAllTimeFavorite } = await axios.get(
-    `${BASE_URL_ANILIST}/advanced-search?sort=["FAVOURITES_DESC"]&perPage=${perPage}&page=1`
+    `${process.env.ANILIST_URL}/advanced-search?sort=["FAVOURITES_DESC"]&perPage=${perPage}&page=1`
   );
   console.log("FETCHED ALL TIME FAVE");
   return cachedAllTimeFavorite as MultipleAnimeResponse;
@@ -43,7 +40,7 @@ export async function fetchAllTimeFavoriteAnimes(perPage: number) {
 
 export async function searchAnime(query: string) {
   const { data: searchResults } = await axios.get(
-    `${BASE_URL_ANILIST}/advanced-search?query=${query}&perPage=10`
+    `${process.env.ANILIST_URL}/advanced-search?query=${query}&perPage=10`
   );
   return searchResults as MultipleAnimeResponse;
 }
@@ -74,24 +71,24 @@ export async function filterAnime(
   const _status = status ? `&status=${status}` : "";
 
   const { data: filteredAnimes } = await axios.get(
-    `${BASE_URL_ANILIST}/advanced-search?perPage=30${_query}${_season}${_genres}${_year}${_sortBy}${_format}${_page}${_status}`
+    `${process.env.ANILIST_URL}/advanced-search?perPage=30${_query}${_season}${_genres}${_year}${_sortBy}${_format}${_page}${_status}`
   );
 
-  console.log('SEARCH FOR ANIME', query);
+  console.log("SEARCH FOR ANIME", query);
   return filteredAnimes as MultipleAnimeResponse;
 }
 
 export async function fetchAnimeInfoAnilist(animeId: string) {
   const { data: animeInfoAnilist } = await axios.get(
-    `${BASE_URL_ANILIST}/data/${animeId}`
+    `${process.env.ANILIST_URL}/data/${animeId}`
   );
-  console.log('FETCHED ANIME INFO ANILIST', animeId);
+  console.log("FETCHED ANIME INFO ANILIST", animeId);
   return animeInfoAnilist as AnimeInfoAnilist;
 }
 
 export async function fetchAnimeInfoAnify(id: string) {
   const { data: cachedAnimeInfoAnify } = await axios.get(
-    `${BASE_URL_ANIFY}/${id}?fields=[episodes,bannerImage,coverImage,title,rating,trailer,description,type,id,totalEpisodes,year,status,format]`
+    `${process.env.ANIFY_URL}/${id}?fields=[episodes,bannerImage,coverImage,title,rating,trailer,description,type,id,totalEpisodes,year,status,format]`
   );
   console.log("FETCHED ANILIST");
   return cachedAnimeInfoAnify as AnimeInfoAnify;
@@ -99,7 +96,7 @@ export async function fetchAnimeInfoAnify(id: string) {
 
 export async function fetchPopularAnimes(perPage: number) {
   const { data: popularAnimes } = await axios.get(
-    `${BASE_URL_ANILIST}/advanced-search?sort=["POPULARITY_DESC"]&perPage=${perPage}`
+    `${process.env.ANILIST_URL}/advanced-search?sort=["POPULARITY_DESC"]&perPage=${perPage}`
   );
   console.log("FETCHED POPULAR");
   return popularAnimes as MultipleAnimeResponse;
@@ -109,11 +106,13 @@ export async function fetchAnimeEpisodes(animeId: string) {
   const [anifyEpsResponse, anilistEpsResponse, anizipEpsResponse] =
     await axios.all([
       axios
-        .get(`https://anify.eltik.cc/info/${animeId}?fields=[episodes]`)
+        .get(`${process.env.ANIFY_URL}/info/${animeId}?fields=[episodes]`)
         .catch(() => null),
-      axios.get(`${BASE_URL_ANILIST}/episodes/${animeId}`).catch(() => null),
       axios
-        .get(`https://api.ani.zip/mappings?anilist_id=${animeId}`)
+        .get(`${process.env.ANILIST_URL}/episodes/${animeId}`)
+        .catch(() => null),
+      axios
+        .get(`${process.env.ANIZIP_URL}/mappings?anilist_id=${animeId}`)
         .catch(() => null),
     ]);
 
@@ -124,14 +123,14 @@ export async function fetchAnimeEpisodes(animeId: string) {
   const anilistEps = anilistEpsResponse?.data as Episode[];
   const anizipEps = anizipEpsResponse?.data as AnimeInfoAnizip;
 
-  console.log('FETCHED EPISODES', animeId);
+  console.log("FETCHED EPISODES", animeId);
 
   return { anifyEps, anilistEps, anizipEps };
 }
 
 export async function fetchEpisodeStreamLinks(episodeId: string) {
   const { data: episodeStreamLinks } = await axios.get(
-    `${BASE_URL_ANILIST}/watch/${episodeId}`
+    `${process.env.ANILIST_URL}/watch/${episodeId}`
   );
   console.log("FETCHED EPISODE LINKS", episodeId);
   return episodeStreamLinks as EpisodeStreamLinks;

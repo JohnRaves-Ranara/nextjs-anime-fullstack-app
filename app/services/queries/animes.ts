@@ -16,7 +16,6 @@ import {
 import {
   fetchAllTimeFavoriteAnimes,
   fetchAnimeEpisodes,
-  fetchAnimeInfoAnify,
   fetchAnimeInfoAnilist,
   fetchEpisodeStreamLinks,
   fetchPopularAnimes,
@@ -26,9 +25,6 @@ import {
   searchAnime,
 } from "../functions/animes";
 import { AnimeInfoAnizip } from "@/utils/types/animeAnizip";
-
-const BASE_URL_ANILIST = "https://consumet-api-raves.vercel.app/meta/anilist";
-const BASE_URL_ANIFY = "https://anify.eltik.cc/info";
 
 // const frequentlyChanging = {
 //   gcTime: 180 * (60 * 1000), //3 hrs
